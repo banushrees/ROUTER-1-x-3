@@ -1,0 +1,11 @@
+Timing report interpretation
+Parameter	Result
+Library	lsi_10k
+Operating condition	nom_pvt
+Path group	clk
+Path type	Maximum
+Data arrival time	9.20 ns
+Data required time	9.20 ns
+Slack	0.00 ns
+Timing status	MET
+Clock period	10.00 ns
