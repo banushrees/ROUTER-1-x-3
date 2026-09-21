@@ -37,13 +37,11 @@ The specified top-level interface contains:
 
 The Maven specification describes clk as a 256 Hz clock, reset as asynchronous active-high, key as a four-bit input, and sound_alarm as an active-high output. It also defines fast_watch as a mode that makes the clock run faster for simulation. fileciteturn46file0L1-L1
 
----
 
 ## 3. Top-Level Architecture
 
 The Alarm Clock is organized around the following functional blocks:
 
-text
                          ┌─────────────────────┐
                          │    Time Generator   │
                          └──────────┬──────────┘
@@ -76,7 +74,7 @@ text
               ▼                 ▼
        LCD display outputs   sound_alarm
 
-The Maven top-level specification requires all lower-level modules to be instantiated according to the architecture, followed by testbench verification and RTL synthesis. fileciteturn46file0L18-L18
+
 
 ## 4. Functional Blocks
 ### 4.1 Time Generator
