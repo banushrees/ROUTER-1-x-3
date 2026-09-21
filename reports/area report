@@ -1,0 +1,15 @@
+The key results in your report
+Metric	Result
+Ports	40
+Nets	2,086
+Cells	1,628
+Combinational cells	1,169
+Sequential cells	458
+Macros / black boxes	0
+Buf/Inv cells	172
+References	33
+Combinational area	2,577
+Buf/Inv area	288
+Non-combinational area	3,218
+Total cell area	5,795
+Total area	Undefined
