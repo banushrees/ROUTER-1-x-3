@@ -35,7 +35,7 @@ The specified top-level interface contains:
 | display_ms_min[7:0] | Most-significant minute LCD output |
 | display_ls_min[7:0] | Least-significant minute LCD output |
 
-The Maven specification describes `clk` as a 256 Hz clock, `reset` as asynchronous active-high, `key` as a four-bit input, and `sound_alarm` as an active-high output. It also defines `fast_watch` as a mode that makes the clock run faster for simulation. fileciteturn46file0L1-L1
+The Maven specification describes clk as a 256 Hz clock, reset as asynchronous active-high, key as a four-bit input, and sound_alarm as an active-high output. It also defines fast_watch as a mode that makes the clock run faster for simulation. fileciteturn46file0L1-L1
 
 ---
 
