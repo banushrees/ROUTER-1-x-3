@@ -162,37 +162,34 @@ Displaying the alarm time
 Timing out incomplete key entry
 Returning the display to the current time
 
-The Maven specification states that digits 0–9 are valid time-entry keys and 10 represents No Key. A maximum of 10 seconds is allowed for each key entry. fileciteturn46file0L15-L16
-
-Controller FSM
+## Controller FSM
 
 The specified controller states are:
 
 SHOW_TIME
-    │
-    ├── key != 10 ──► KEY_ENTRY
-    │
-    └── alarm_button ──► SHOW_ALARM
+    
+ key != 10 ──► KEY_ENTRY
+ alarm_button ──► SHOW_ALARM
 
 KEY_ENTRY
-    │
-    ├── key == 10 ──► KEY_WAITED
-    ├── key != 10 ──► KEY_ENTRY
-    ├── alarm_button ──► SET_ALARM_TIME
-    └── time_button ──► SET_CURRENT_TIME
+
+key == 10 ──► KEY_WAITED
+ key != 10 ──► KEY_ENTRY
+alarm_button ──► SET_ALARM_TIME
+time_button ──► SET_CURRENT_TIME
 
 KEY_WAITED
-    │
-    ├── time_out == 0 ──► SHOW_TIME
-    └── key == 10 / timeout behavior
+    
+time_out == 0 ──► SHOW_TIME
+key == 10 / timeout behavior
 
 SET_ALARM_TIME ──► SHOW_TIME
 
 SET_CURRENT_TIME ──► SHOW_TIME
 
 SHOW_ALARM
-    │
-    └── !alarm_button ──► SHOW_TIME
+
+!alarm_button ──► SHOW_TIME
 
 The state names and transition conditions follow the supplied Maven controller-FSM specification. fileciteturn46file0L17-L17
 
