@@ -42,7 +42,7 @@ The Maven specification describes `clk` as a 256 Hz clock, `reset` as asynchrono
 
 The Alarm Clock is organized around the following functional blocks:
 
-```text
+text
                          ┌─────────────────────┐
                          │    Time Generator   │
                          └──────────┬──────────┘
