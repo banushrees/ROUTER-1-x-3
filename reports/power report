@@ -1,17 +1,46 @@
-Parameter	Result
-Library	lsi_10k
-Operating condition	nom_pvt
-Operating voltage	5 V
-Internal cell power	0.0000 nW
-Net switching power	22.7022 µW
-Total dynamic power	22.7022 µW
-Leakage power	0.0000
-Power characterization	Internal power not characterized
+Library(s) Used:
 
-Analysis	Result
-Lint	1 × LINT-52 warning
-Total cell area	5795
-Critical path delay	9.20 ns
-Timing slack	0.00 ns (MET)
-Net switching power	22.7022 µW
-Reported dynamic power	22.7022 µW
+    lsi_10k (File: /home/cad/eda/SYNOPSYS/Design_compiler/syn/X-2025.06/libraries/syn/lsi_10k.db)
+
+Information: The cells in your design are not characterized for internal power. (PWR-229)
+
+Operating Conditions: nom_pvt   Library: lsi_10k
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 5
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 0.100000ff
+    Time Units = 1ns
+    Dynamic Power Units = 100nW    (derived from V,C,T units)
+    Leakage Power Units = Unitless
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  =   0.0000 nW    (0%)
+  Net Switching Power  =  30.1477 uW  (100%)
+                         ---------
+Total Dynamic Power    =  30.1477 uW  (100%)
+
+Cell Leakage Power     =   0.0000
+
+Error: Either dynamic power or leakage power, in the library, is unitless. Unable to display complete power group summary. (PWR-799)
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad             0.0000            0.0000            0.0000               NA   --More-(     N/A)
+memory             0.0000            0.0000            0.0000               NA   --More-(     N/A)
+black_box          0.0000            0.0000            0.0000               NA   --More-(     N/A)
+clock_network      0.0000            0.0000            0.0000               NA   --More-(     N/A)  i
+register           0.0000        2.5079e+03            0.0000               NA   --More-(     N/A)
+sequential         0.0000            0.0000            0.0000               NA   --More-(     N/A)
+combinational      0.0000        2.7640e+04            0.0000               NA   --More-(     N/A)
+--------------------------------------------------------------------------------------------------
+Total              0.0000 nW     3.0148e+04 nW         0.0000               NA
+1
