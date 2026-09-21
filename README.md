@@ -42,38 +42,7 @@ The Maven specification describes clk as a 256 Hz clock, reset as asynchronous a
 
 The Alarm Clock is organized around the following functional blocks:
 
-                         ┌─────────────────────┐
-                         │    Time Generator   │
-                         └──────────┬──────────┘
-                                    │
-                           one_second / one_minute
-                                    │
-                                    ▼
-┌──────────────┐          ┌─────────────────────┐
-│  Key Register│◄─────────│   Alarm Controller  │
-└──────┬───────┘          └──────┬──────┬───────┘
-       │                         │      │
-       │                         │      ├── show_a
-       │                         │      ├── show_new_time
-       │                         │      ├── load_new_a
-       │                         │      └── load_new_c
-       │                         │
-       ▼                         ▼
-┌──────────────┐          ┌─────────────────────┐
-│Alarm Register│          │       Counter       │
-└──────┬───────┘          └──────────┬──────────┘
-       │                             │
-       └──────────────┬───────────────┘
-                      │
-                      ▼
-              ┌─────────────────┐
-              │  Display Driver │
-              └────────┬────────┘
-                       │
-              ┌────────┴────────┐
-              ▼                 ▼
-       LCD display outputs   sound_alarm
-
+<img width="1233" height="1275" alt="ChatGPT Image Sep 21, 2026, 11_07_34 PM" src="https://github.com/user-attachments/assets/8233100d-38b6-4cda-89a1-137aba471b78" />
 
 
 ## 4. Functional Blocks
