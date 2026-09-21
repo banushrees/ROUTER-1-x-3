@@ -1,5 +1,6 @@
 # ROUTER-1-X-3
 ## 1. Project Overview
+<img width="1536" height="1024" alt="ChatGPT Image Sep 21, 2026, 11_02_24 PM" src="https://github.com/user-attachments/assets/507176ad-a167-432d-88ca-f9647555ee0d" />
 
 The Alarm Clock is a digital clock design that maintains the current time, allows the user to enter a new time or alarm time using a 4-bit keypad input, displays the selected time in LCD-compatible format, and generates an alarm output when the current time matches the programmed alarm time.
 
