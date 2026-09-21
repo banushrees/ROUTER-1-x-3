@@ -50,7 +50,7 @@ The Alarm Clock is organized around the following functional blocks:
                                     │
                                     ▼
 ┌──────────────┐          ┌─────────────────────┐
-│  Key Register│◄─────────│   Alarm Controller │
+│  Key Register│◄─────────│   Alarm Controller  │
 └──────┬───────┘          └──────┬──────┬───────┘
        │                         │      │
        │                         │      ├── show_a
@@ -62,7 +62,7 @@ The Alarm Clock is organized around the following functional blocks:
 ┌──────────────┐          ┌─────────────────────┐
 │Alarm Register│          │       Counter       │
 └──────┬───────┘          └──────────┬──────────┘
-       │                              │
+       │                             │
        └──────────────┬───────────────┘
                       │
                       ▼
