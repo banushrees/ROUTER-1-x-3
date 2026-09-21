@@ -1,0 +1,17 @@
+Parameter	Result
+Library	lsi_10k
+Operating condition	nom_pvt
+Operating voltage	5 V
+Internal cell power	0.0000 nW
+Net switching power	22.7022 µW
+Total dynamic power	22.7022 µW
+Leakage power	0.0000
+Power characterization	Internal power not characterized
+
+Analysis	Result
+Lint	1 × LINT-52 warning
+Total cell area	5795
+Critical path delay	9.20 ns
+Timing slack	0.00 ns (MET)
+Net switching power	22.7022 µW
+Reported dynamic power	22.7022 µW
