@@ -77,8 +77,8 @@ The Alarm Clock is organized around the following functional blocks:
 
 The Maven top-level specification requires all lower-level modules to be instantiated according to the architecture, followed by testbench verification and RTL synthesis. fileciteturn46file0L18-L18
 
-4. Functional Blocks
-4.1 Time Generator
+## 4. Functional Blocks
+### 4.1 Time Generator
 
 The Time Generator is a sequential block that generates the one_second and one_minute pulses used by the Counter.
 
@@ -99,7 +99,7 @@ reset = 1 resets the outputs.
 
 These behaviors are defined in the Maven project specification. fileciteturn46file0L9-L10
 
-4.2 Counter
+## 4.2 Counter
 
 The Counter maintains the current hour and minute digits.
 
@@ -137,7 +137,7 @@ LS_HR = 9 AND MS_MIN = 5 AND LS_MIN = 9
 
 MS_HR = 2 AND LS_HR = 3 AND MS_MIN = 5 AND LS_MIN = 9
 → all time digits = 0
-4.3 Key Register
+## 4.3 Key Register
 
 The Key Register is a sequential block that stores keypad values and shifts previously entered digits.
 
@@ -155,7 +155,7 @@ key_buffer_ms_hr
 
 The specified key-entry behavior supports entering the four time digits from right to left. fileciteturn46file0L13-L14
 
-4.4 Alarm Register
+## 4.4 Alarm Register
 
 The Alarm Register is a sequential block that stores the programmed alarm time.
 
@@ -172,7 +172,7 @@ load_new_a = 0 and reset = 0
 
 This block stores the four BCD alarm-time digits. fileciteturn46file0L8-L8
 
-4.5 Alarm Controller
+## 4.5 Alarm Controller
 
 The Alarm Controller generates control signals for the Key Register, Counter, Display Driver, and Time Generator.
 
@@ -228,7 +228,7 @@ SHOW_ALARM
 
 The state names and transition conditions follow the supplied Maven controller-FSM specification. fileciteturn46file0L17-L17
 
-4.6 LCD Display Driver
+## 4.6 LCD Display Driver
 
 The Display Driver is the combinational logic portion of the design.
 
@@ -265,7 +265,7 @@ BCD	LCD value
 
 The mapping is specified by the supplied Maven material. fileciteturn46file0L5-L5
 
-4.7 LCD Display Unit
+## 4.7 LCD Display Unit
 
 The LCD Display Unit combines the four time digits:
 
@@ -275,7 +275,7 @@ and produces the four 8-bit LCD-compatible display outputs.
 
 The Maven specification identifies this as the display unit responsible for displaying the four hour/minute digits in LCD format. fileciteturn46file0L6-L7
 
-5. Verification Architecture
+## 5. Verification Architecture
 
 The project was verified using a SystemVerilog/UVM-based verification environment.
 
@@ -300,7 +300,7 @@ UVM tests
 SystemVerilog Assertions
 Functional coverage
 Coverage reporting
-6. SystemVerilog Assertions
+## 6. SystemVerilog Assertions
 
 SVA was used to verify important temporal/protocol behaviors of the Alarm Clock RTL.
 
@@ -312,7 +312,7 @@ alarm_clock_assertions/
 
 and the simulation flow enables assertion checking and assertion coverage.
 
-7. Verification Tests
+## 7. Verification Tests
 
 The simulation flow contains multiple tests, including:
 
@@ -323,7 +323,7 @@ alarm_clock_child_test
 
 The regression flow executes the relevant test cases and merges their coverage databases.
 
-8. Functional Coverage
+## 8. Functional Coverage
 
 Coverage is collected using Synopsys VCS coverage options and merged using URG.
 
@@ -344,7 +344,7 @@ Module definition coverage	80%
 
 These values represent the coverage report generated from the project regression.
 
-9. Simulation Result
+## 9. Simulation Result
 
 The simulation completed with:
 
@@ -363,7 +363,7 @@ SOUND ALARM IS NOT WORKING PROPERLY
 
 Therefore, the project is not described as completely error-free. The scoreboard finding is retained as part of the verification evidence and can be investigated further.
 
-10. Coverage Reporting Flow
+## 10. Coverage Reporting Flow
 
 The VCS coverage flow used:
 
@@ -382,7 +382,7 @@ urgReport/dashboard.html
 The report can be opened locally with:
 
 firefox "$(pwd)/urgReport/dashboard.html" &
-11. Repository Structure
+## 11. Repository Structure
 ALARM-CLOCK-SVA/
 │
 ├── rtl/
@@ -409,7 +409,7 @@ The result and topology result files are retained as project evidence containing
 
 Generated simulator and coverage databases should not be committed to the repository.
 
-12. Tools Used
+## 12. Tools Used
 Verilog — RTL design
 SystemVerilog — testbench and verification
 UVM — constrained/randomized verification environment
@@ -417,7 +417,7 @@ SVA — temporal assertion checking
 Synopsys VCS X-2025.06 — simulation and coverage
 Synopsys URG — coverage report generation
 Verdi — waveform/debug support
-13. Project Workflow
+## 13. Project Workflow
 Maven Functional Specification
             ↓
         RTL Design
@@ -437,7 +437,7 @@ Maven Functional Specification
         URG Merge
             ↓
       HTML Coverage Report
-14. Key Learning Outcomes
+## 14. Key Learning Outcomes
 
 This project demonstrates practical experience with:
 
@@ -456,7 +456,7 @@ Functional coverage
 Coverage database merging
 VCS/URG simulation and reporting
 Debugging simulation failures
-15. Known Results & Areas for Improvement
+## 15. Known Results & Areas for Improvement
 
 The current project provides measurable verification evidence, but it also exposes areas for further improvement:
 
@@ -470,6 +470,6 @@ Investigate the exact synchronization/timing relationship behind the sound_alarm
 
 These improvements would make the verification environment more comprehensive and improve coverage closure.
 
-16. Reference
+## 16. Reference
 
 The functional architecture, I/O definition, module descriptions, timing behavior, controller states, counting algorithm, and RTL design procedure documented in this README are based on the supplied Maven Silicon Alarm Clock training material. The project-specific implementation, verification results, coverage values, and simulation results are documented separately based on the repository's actual execution.
