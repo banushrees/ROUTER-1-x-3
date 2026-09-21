@@ -1,0 +1,12 @@
+Final Router project results
+Analysis	Actual result
+Lint	1 × LINT-52 warning
+Clock period	10 ns
+Clock frequency	100 MHz
+Critical path delay	9.20 ns
+Timing slack	0.00 ns — MET
+Total cell area	5795
+Net switching power	22.7022 µW
+Reported dynamic power	22.7022 µW
+Internal power	Not characterized
+Leakage power	Reported as 0
