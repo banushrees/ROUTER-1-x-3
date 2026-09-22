@@ -335,24 +335,18 @@ The top-level module connects the control, packet data, FIFO status, output data
 
 Top-Level Hierarchy
 router_top
-│
-├── FSM
-│   └── router_fsm
-│
-├── REG
-│   └── router_reg
-│
-├── SYNC
-│   └── router_sync
-│
-├── FIFO0
-│   └── router_fifo
-│
-├── FIFO1
-│   └── router_fifo
-│
-└── FIFO2
-    └── router_fifo
+ FSM
+ - router_fsm
+ REG
+   router_reg
+ SYNC
+-  router_sync
+ FIFO0
+- router_fifo
+   FIFO1
+- router_fifo
+ FIFO2
+- router_fifo
 
 The supplied RTL design procedure specifies router_top.v as the top-level module, with router_top_tb.v as the testbench, followed by lower-level module instantiation, functional verification, and synthesis.
 
