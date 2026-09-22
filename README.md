@@ -1,440 +1,557 @@
-# ROUTER-1-X-3
-## 1. Project Overview
-<img width="1536" height="1024" alt="ChatGPT Image Sep 21, 2026, 11_02_24 PM" src="https://github.com/user-attachments/assets/507176ad-a167-432d-88ca-f9647555ee0d" />
+# 2. Project Objectives
 
-The Alarm Clock is a digital clock design that maintains the current time, allows the user to enter a new time or alarm time using a 4-bit keypad input, displays the selected time in LCD-compatible format, and generates an alarm output when the current time matches the programmed alarm time.
+The main objectives of this project are:
 
-The Maven specification defines the top-level Alarm Clock around six major functional blocks:
-
-1. Time Generator
-2. Key Register
-3. Alarm Register
-4. Counter
-5. Alarm Controller
-6. Display Driver
-
-The specification identifies these as sequential logic blocks except for the display driver, which is combinational logic. 
+- Design a packet-based 1×3 router using Verilog RTL.
+- Route packets from one input port to one of three output ports.
+- Store packets in destination-specific FIFOs.
+- Implement packet parity checking for error detection.
+- Handle FIFO full/empty conditions.
+- Implement timeout-based FIFO soft reset.
+- Verify the RTL using a Verilog testbench.
+- Perform linting and structural checks.
+- Synthesize the RTL and analyze area, timing, clock, and power reports.
 
 ---
 
-## 2. Top-Level I/O
+# 3. Top-Level Architecture
+
+The Router 1×3 consists of the following major blocks:
+
+                         ┌──────────────────┐
+                         │   Router Top     │
+                         │   router_top     │
+                         └────────┬─────────┘
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+              ▼                   ▼                   ▼
+       ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+       │     FSM     │     │  Register   │     │Synchronizer │
+       │ router_fsm  │     │ router_reg  │     │ router_sync │
+       └─────────────┘     └─────────────┘     └──────┬──────┘
+                                                      │
+                         ┌────────────────────────────┼───────────────┐
+                         │                            │               │
+                         ▼                            ▼               ▼
+                    ┌─────────┐                  ┌─────────┐     ┌─────────┐
+                    │  FIFO0  │                  │  FIFO1  │     │  FIFO2  │
+                    └─────────┘                  └─────────┘     └─────────┘
+                         │                            │               │
+                         ▼                            ▼               ▼
+                    data_out_0                   data_out_1      data_out_2
+
+The top-level design contains three FIFOs, a Synchronizer, a Register block, and a Finite State Machine. The Maven specification identifies these as the six sub-blocks of the router: three FIFOs plus Synchronizer, Register, and FSM.
+
+# 4. Router Interface
+Signal	Direction	Description
+clock	Input	Active-high clocking event
+resetn	Input	Active-low synchronous reset
+pkt_valid	Input	Indicates arrival of a new packet
+data_in[7:0]	Input	8-bit packet input data
+read_enb_0	Input	Enables reading from output FIFO 0
+read_enb_1	Input	Enables reading from output FIFO 1
+read_enb_2	Input	Enables reading from output FIFO 2
+data_out_0[7:0]	Output	Data sent to destination network 1
+data_out_1[7:0]	Output	Data sent to destination network 2
+data_out_2[7:0]	Output	Data sent to destination network 3
+vld_out_0	Output	Indicates valid data at output 0
+vld_out_1	Output	Indicates valid data at output 1
+vld_out_2	Output	Indicates valid data at output 2
+busy	Output	Indicates that the router cannot accept a new byte
+error	Output	Indicates packet parity mismatch
+
+The interface behavior follows the supplied Router 1×3 specification. fileciteturn47file0L3-L3
+
+## 5. Packet Format
+
+Each router packet consists of three sections:
+
+┌──────────────┬──────────────────────┬──────────────┐
+│    Header    │       Payload        │    Parity    │
+└──────────────┴──────────────────────┴──────────────┘
+     8 bits          1–63 bytes           8 bits
+Header
+
+The header contains:
+
+Destination Address (DA): 2 bits
+Payload Length: 6 bits
+
+The destination address determines which output FIFO receives the packet.
+
+DA = 2'b00 → FIFO0
+DA = 2'b01 → FIFO1
+DA = 2'b10 → FIFO2
+DA = 2'b11 → Invalid address
+
+The payload length can range from 1 byte to 63 bytes.
+
+Payload
+
+The payload contains the actual packet data and is transferred byte by byte.
+
+Parity
+
+The parity byte is used to detect corruption. The router calculates internal parity across the header and payload and compares it against the received packet parity.
+
+A mismatch causes the error output to be asserted.
+
+The packet structure, destination-address field, payload-length field, and parity mechanism are defined in the supplied specification. 
 
-The specified top-level interface contains:
+## 6. Input Protocol
+
+The input packet transfer follows this sequence:
 
-| Signal | Description |
-|---|---|
-| clk | 256 Hz clock |
-| reset | Asynchronous active-high reset |
-| key[3:0] | 4-bit keypad input |
-| alarm_button | Active-high control for setting alarm time |
-| time_button| Active-high control for setting current time |
-| fast_watch | Enables faster clock behavior for simulation |
-| sound_alarm | Active-high alarm output |
-| display_ms_hr[7:0] | Most-significant hour LCD output |
-| display_ls_hr[7:0] | Least-significant hour LCD output |
-| display_ms_min[7:0] | Most-significant minute LCD output |
-| display_ls_min[7:0] | Least-significant minute LCD output |
+Header
+  ↓
+Payload Byte 1
+  ↓
+Payload Byte 2
+  ↓
+...
+  ↓
+Last Payload Byte
+  ↓
+Parity Byte
+Packet reception
+pkt_valid is asserted when the header byte is presented on data_in.
+The header contains the destination address.
+Each payload byte is presented on successive clock cycles.
+After the final payload byte, pkt_valid is deasserted.
+The parity byte is then presented.
+The router checks the received parity against the internally calculated parity.
 
-The Maven specification describes clk as a 256 Hz clock, reset as asynchronous active-high, key as a four-bit input, and sound_alarm as an active-high output. It also defines fast_watch as a mode that makes the clock run faster for simulation. fileciteturn46file0L1-L1
+The specification also states that the testbench should hold the last driven value whenever busy is asserted because incoming bytes are dropped while the router is busy. 
 
+## 7. Output Protocol
 
-## 3. Top-Level Architecture
+Each output channel contains a dedicated FIFO.
+
+                 ┌──────────┐
+data_out_0 ◄─────│  FIFO0   │
+                 └──────────┘
+
+                 ┌──────────┐
+data_out_1 ◄─────│  FIFO1   │
+                 └──────────┘
 
-The Alarm Clock is organized around the following functional blocks:
+                 ┌──────────┐
+data_out_2 ◄─────│  FIFO2   │
+                 └──────────┘
 
-<img width="1233" height="1275" alt="ChatGPT Image Sep 21, 2026, 11_07_34 PM" src="https://github.com/user-attachments/assets/8233100d-38b6-4cda-89a1-137aba471b78" />
+For each output:
 
+vld_out_x = 1
+      ↓
+Receiver detects valid data
+      ↓
+Receiver asserts read_enb_x
+      ↓
+Data is read through data_out_x
 
-## 4. Functional Blocks
-### 4.1 Time Generator
+Each FIFO is specified as 16 locations × 9 bits. The extra bit is used to identify the header byte internally. fileciteturn47file0L9-L13
 
-The Time Generator is a sequential block that generates the one_second and one_minute pulses used by the Counter.
+The receiver must assert the corresponding read_enb_x within 30 clock cycles after vld_out_x is asserted; otherwise a timeout occurs and the FIFO is reset through its soft-reset mechanism. 
 
-For a 256 Hz clock:
+## 8. RTL Sub-Blocks
+8.1 Router FIFO — router_fifo.v
 
-1 second = 256 clock cycles
+Three FIFO instances are used:
 
-1 minute = 256 × 60
-         = 15360 clock cycles
+FIFO0
+FIFO1
+FIFO2
 
-The specified behavior includes:
+Each FIFO:
 
-one_second becomes active for one clock period after 256 cycles.
-one_minute becomes active for one clock period after 15360 cycles.
-When fast_watch = 1, one_minute follows one_second for faster simulation.
-reset_count = 1 resets the generated outputs.
-reset = 1 resets the outputs.
+Has a width of 9 bits.
+Has a depth of 16 locations.
+Uses the system clock.
+Uses an active-low synchronous reset.
+Supports simultaneous read and write operations.
+Prevents write operation when full.
+Prevents read operation when empty.
+Uses an additional bit to identify the header byte.
+Supports internal soft_reset during timeout conditions.
 
-These behaviors are defined in the Maven project specification. fileciteturn46file0L9-L10
+The specification states that the 9th bit is set for the header byte and cleared for the remaining packet bytes. fileciteturn47file0L12-L13
 
-## 4.2 Counter
+## 8.2 Router Synchronizer — router_sync.v
 
-The Counter maintains the current hour and minute digits.
+The Synchronizer provides communication between the router FSM and the three FIFO blocks.
 
-Its specified behavior is:
+Its main responsibilities include:
 
-reset = 1
-→ all outputs reset to ZERO
+Selecting the destination FIFO.
+Generating fifo_full.
+Generating vld_out_0, vld_out_1, and vld_out_2.
+Generating the FIFO write-enable signals.
+Generating FIFO soft-reset signals during timeout conditions.
 
-load_new_c = 1 and reset = 0
-→ load new current-time values
+FIFO selection is based on the destination address:
 
-load_new_c = 0 and one_minute = 0
-→ retain previous values
+data_in = 2'b00 → fifo_full = full_0
+data_in = 2'b01 → fifo_full = full_1
+data_in = 2'b10 → fifo_full = full_2
+otherwise        → fifo_full = 0
 
-load_new_c = 0 and one_minute = 1
-→ increment according to the clock-counting algorithm
+The valid-output signals are generated from FIFO empty status:
 
-The counting sequence follows the standard 24-hour BCD-style transitions specified by Maven. fileciteturn46file0L11-L12
+vld_out_0 = ~empty_0
+vld_out_1 = ~empty_1
+vld_out_2 = ~empty_2
 
-Counting Algorithm
-LS_MIN = 9
-→ LS_MIN = 0
-  MS_MIN = MS_MIN + 1
+The soft-reset logic is activated when a destination receiver does not assert its corresponding read_enb_x within the specified timeout period. 
 
-MS_MIN = 5 AND LS_MIN = 9
-→ MS_MIN = 0
-  LS_MIN = 0
-  LS_HR = LS_HR + 1
+9. Router Controller / FSM — router_fsm.v
 
-LS_HR = 9 AND MS_MIN = 5 AND LS_MIN = 9
-→ MS_MIN = 0
-  LS_MIN = 0
-  LS_HR = 0
-  MS_HR = MS_HR + 1
+The FSM is the main controller of the router. It generates the control signals required to receive, store, and process a packet.
 
-MS_HR = 2 AND LS_HR = 3 AND MS_MIN = 5 AND LS_MIN = 9
-→ all time digits = 0
-## 4.3 Key Register
+FSM States
+DECODE_ADDRESS
+       │
+       ▼
+LOAD_FIRST_DATA
+       │
+       ▼
+LOAD_DATA
+     /     \
+fifo_full  pkt_valid=0
+   ↓          ↓
+FIFO_FULL   LOAD_PARITY
+   │           │
+   ↓           ▼
+LOAD_AFTER_FULL
+       │
+       ▼
+CHECK_PARITY_ERROR
+       │
+       ▼
+DECODE_ADDRESS
 
-The Key Register is a sequential block that stores keypad values and shifts previously entered digits.
+Additional state:
 
-The key is loaded into key_buffer_ls_min on the positive clock edge when shift is asserted. Existing values are shifted through the other digit registers.
+WAIT_TILL_EMPTY
+State Functions
 
-key
- ↓
-key_buffer_ls_min
- ↓
-key_buffer_ms_min
- ↓
-key_buffer_ls_hr
- ↓
-key_buffer_ms_hr
+DECODE_ADDRESS
 
-The specified key-entry behavior supports entering the four time digits from right to left. fileciteturn46file0L13-L14
+Initial/reset state.
+Detects the incoming packet.
+Detects and latches the header byte.
 
-## 4.4 Alarm Register
+LOAD_FIRST_DATA
 
-The Alarm Register is a sequential block that stores the programmed alarm time.
+Loads the first packet byte into the selected FIFO.
+Asserts busy so the already-latched header is not overwritten.
+Transitions unconditionally to LOAD_DATA.
 
-Specified behavior:
+LOAD_DATA
 
-reset = 1
-→ all outputs become ZERO
+Loads payload bytes into the selected FIFO.
+Deasserts busy during normal payload reception.
+Asserts write_enb_reg.
+Moves to LOAD_PARITY when pkt_valid goes low.
+Moves to FIFO_FULL_STATE when the selected FIFO becomes full.
 
-load_new_a = 1 and reset = 0
-→ outputs load the new alarm-time inputs
+LOAD_PARITY
 
-load_new_a = 0 and reset = 0
-→ outputs retain their previous values
+Captures the final parity byte.
+Asserts busy.
+Writes the parity byte into the FIFO.
+Moves to CHECK_PARITY_ERROR.
 
-This block stores the four BCD alarm-time digits. fileciteturn46file0L8-L8
+FIFO_FULL_STATE
 
-## 4.5 Alarm Controller
+Asserts busy.
+Deasserts write_enb_reg.
+Indicates that the selected FIFO is full.
 
-The Alarm Controller generates control signals for the Key Register, Counter, Display Driver, and Time Generator.
+LOAD_AFTER_FULL
 
-The specified control outputs include:
+Handles data after a FIFO-full condition.
+Uses laf_state.
+Returns toward packet completion based on parity_done and low_pkt_valid.
 
-reset_count
-load_new_c
-show_new_time
-show_a
-load_new_a
-shift
+WAIT_TILL_EMPTY
 
-The controller handles:
+Holds the router busy while waiting for the required FIFO condition.
 
-Key entry
-Setting the current time
-Setting the alarm time
-Displaying the alarm time
-Timing out incomplete key entry
-Returning the display to the current time
+CHECK_PARITY_ERROR
 
-## Controller FSM
+Generates rst_int_reg.
+Completes the parity-check sequence.
+Returns toward DECODE_ADDRESS or FIFO_FULL_STATE depending on FIFO status.
 
-The specified controller states are:
+These state functions and transitions are based on the supplied router FSM specification. 
 
-SHOW_TIME
-    
- key != 10 ──► KEY_ENTRY
- alarm_button ──► SHOW_ALARM
+## 10. Router Register — router_reg.v
 
-KEY_ENTRY
+The Register block stores and processes packet information.
 
-key == 10 ──► KEY_WAITED
- key != 10 ──► KEY_ENTRY
-alarm_button ──► SET_ALARM_TIME
-time_button ──► SET_CURRENT_TIME
+It contains internal registers for:
 
-KEY_WAITED
-    
-time_out == 0 ──► SHOW_TIME
-key == 10 / timeout behavior
+Header byte
+FIFO/full-state related information
+Internal parity
+Packet parity
 
-SET_ALARM_TIME ──► SHOW_TIME
+Important control signals include:
 
-SET_CURRENT_TIME ──► SHOW_TIME
+parity_done
+low_pkt_valid
+err
+dout
+Parity Calculation
 
-SHOW_ALARM
+Internal parity is calculated using bitwise XOR:
 
-!alarm_button ──► SHOW_TIME
+internal_parity
+    = previous_parity ^ header_byte
 
-The state names and transition conditions follow the supplied Maven controller-FSM specification. fileciteturn46file0L17-L17
+internal_parity
+    = previous_parity ^ payload_byte_1
 
-## 4.6 LCD Display Driver
+internal_parity
+    = previous_parity ^ payload_byte_2
 
-The Display Driver is the combinational logic portion of the design.
+...
 
-It selects which four-bit BCD time value should be displayed based on:
+The received packet parity is compared with the internally calculated parity. If the values do not match, err is asserted.
 
-show_a
-show_new_time
+The Register block behavior and parity-generation process follow the supplied specification. 
 
-Specified selection:
+## 11. Top-Level RTL — router_top.v
 
-show_a = 1 AND show_new_time = 0
-→ display alarm time
+The top-level module integrates:
 
-show_a = 0 AND show_new_time = 0
-→ display current time
+router_fsm
+router_reg
+router_sync
+router_fifo × 3
 
-show_a = 0 AND show_new_time = 1
-→ display newly entered key time
+The top-level module connects the control, packet data, FIFO status, output data, and reset signals between these blocks.
 
-The input time values use 4-bit BCD values. fileciteturn46file0L4-L5
+Top-Level Hierarchy
+router_top
+│
+├── FSM
+│   └── router_fsm
+│
+├── REG
+│   └── router_reg
+│
+├── SYNC
+│   └── router_sync
+│
+├── FIFO0
+│   └── router_fifo
+│
+├── FIFO1
+│   └── router_fifo
+│
+└── FIFO2
+    └── router_fifo
 
-BCD-to-LCD Mapping
-BCD	LCD value
-0000	8'h30
-0001	8'h31
-0010	8'h32
-0011	8'h33
-0100	8'h34
-0101	8'h35
-0110	8'h36
-0111	8'h37
-1000	8'h38
-1001	8'h39
+The supplied RTL design procedure specifies router_top.v as the top-level module, with router_top_tb.v as the testbench, followed by lower-level module instantiation, functional verification, and synthesis.
 
-The mapping is specified by the supplied Maven material. fileciteturn46file0L5-L5
+## 12. Verification
 
-## 4.7 LCD Display Unit
+The project includes a Verilog testbench:
 
-The LCD Display Unit combines the four time digits:
+tb/router_top_tb.v
 
-MS_HR : LS_HR : MS_MIN : LS_MIN
+The RTL simulation environment was compiled and simulated using Questa Sim.
 
-and produces the four 8-bit LCD-compatible display outputs.
+The recorded simulation completed with:
 
-The Maven specification identifies this as the display unit responsible for displaying the four hour/minute digits in LCD format. fileciteturn46file0L6-L7
+6 compiles
+0 compilation failures
 
-## 5. Verification Architecture
+The simulation reached $finish at approximately 780 ns.
 
-The project was verified using a SystemVerilog/UVM-based verification environment.
+## 13. Lint Analysis
 
-The repository is organized into:
+Structural lint/check analysis was performed using Synopsys Design Compiler X-2025.06.
 
-alarm_clock_env/
-alarm_clock_test/
-alarm_clock_ip_agent/
-alarm_clock_display_agent/
-alarm_clock_assertions/
-rtl/
-sim/
+The fresh check_design report identified the following categories:
 
-The verification environment includes:
+LINT-28 : 12 unconnected ports
+LINT-31 :  2 shorted outputs
+LINT-52 :  2 constant outputs
+LINT-32 :  5 connections to power/ground
 
-Transaction-based stimulus
-UVM agents
-Drivers
-Monitors
-Scoreboard/reference checking
-UVM tests
-SystemVerilog Assertions
-Functional coverage
-Coverage reporting
-## 6. SystemVerilog Assertions
+The project therefore should not be described as lint-clean.
 
-SVA was used to verify important temporal/protocol behaviors of the Alarm Clock RTL.
+The complete lint output is available in:
 
-Assertions are bound into the DUT hierarchy through the testbench.
+reports/lint_report.txt
+## 14. Synthesis
 
-The project includes:
+The RTL was synthesized using:
 
-alarm_clock_assertions/
+Synopsys Design Compiler X-2025.06
+Target Library: lsi_10k.db
+Operating Condition: nom_pvt
 
-and the simulation flow enables assertion checking and assertion coverage.
+RTL source files:
 
-## 7. Verification Tests
+router_fifo.v
+router_fsm.v
+router_sync.v
+router_reg.v
+router_top.v
 
-The simulation flow contains multiple tests, including:
+Top-level design:
 
-alarm_clock_test
-alarm_clock_rand_test
-alarm_clock_current_time_test
-alarm_clock_child_test
+router_top
+## 15. Clock Analysis
 
-The regression flow executes the relevant test cases and merges their coverage databases.
+The synthesized design uses:
 
-## 8. Functional Coverage
+Clock name : clk
+Clock source: clock
+Period     : 10 ns
+Waveform   : {0 5}
+Frequency  : 100 MHz
 
-Coverage is collected using Synopsys VCS coverage options and merged using URG.
+The clock report is available at:
 
-The project generates an HTML coverage report under:
+reports/clock_report.txt
+## 16. Area Analysis
 
-urgReport/dashboard.html
+Fresh Design Compiler results:
 
-The final fresh coverage dashboard obtained from the project showed:
+Parameter	Result
+Ports	172
+Nets	2,486
+Cells	1,875
+Combinational cells	1,388
+Sequential cells	477
+Buffer/Inverter cells	277
+Macro/Black Box cells	0
+Combinational area	3018
+Buffer/Inverter area	395
+Non-combinational area	3362
+Total cell area	6380
 
-Coverage Metric	Result
-Overall URG score	84.38%
-Assertion coverage	80.00%
-Group coverage	88.75%
-top.DUV score	85.71%
-top.DUV assertion coverage	85.71%
-alarm_clock_pkg	100%
-Module definition coverage	80%
+The report states that total area is undefined because no wire-load model was specified for net interconnect area.
 
-These values represent the coverage report generated from the project regression.
+The complete report is available at:
 
-## 9. Simulation Result
+reports/area_report.txt
+## 17. Static Timing Analysis
 
-The simulation completed with:
+The reported maximum-delay path is:
 
-UVM_INFO     : 100
-UVM_WARNING  : 0
-UVM_ERROR    : 1
-UVM_FATAL    : 0
+Startpoint:
+FIFO0/rd_ptr_reg[3]
 
-The simulation finished at approximately:
+        ↓
+FIFO0
+        ↓
+SYNC
+        ↓
+FSM
 
-9123517578125
+Endpoint:
+FSM/state_reg[1]
 
-The single UVM error was reported by the scoreboard as:
+For the analyzed path:
 
-SOUND ALARM IS NOT WORKING PROPERLY
+Data arrival time  = 9.77 ns
+Data required time = 9.20 ns
+Slack              = -0.57 ns
 
-Therefore, the project is not described as completely error-free. The scoreboard finding is retained as part of the verification evidence and can be investigated further.
+Result:
 
-## 10. Coverage Reporting Flow
+Timing slack = -0.57 ns
+Status       = VIOLATED
 
-The VCS coverage flow used:
+This means the analyzed path does not meet the specified 10 ns clock requirement under the reported synthesis conditions.
 
-VCS
- ↓
-Simulation tests
- ↓
-Coverage databases
- ↓
-URG merge
- ↓
-HTML coverage report
- ↓
-urgReport/dashboard.html
+The complete timing report is available at:
 
-The report can be opened locally with:
+reports/timing_report.txt
+## 18. Power Analysis
 
-firefox "$(pwd)/urgReport/dashboard.html" &
-## 11. Repository Structure
-ALARM-CLOCK-SVA/
+Fresh Design Compiler power analysis reported:
+
+Net switching power = 30.1477 µW
+Total dynamic power = 30.1477 µW
+
+The selected lsi_10k library does not contain characterized internal cell power. The report also indicates that the complete power-group summary cannot be displayed because of unit limitations in the library.
+
+Therefore, the reported value should be treated as a library-dependent switching/dynamic-power estimate, rather than a complete ASIC power characterization.
+
+Complete report:
+
+reports/power_report.txt
+19. Analysis Summary
+Analysis	Result
+RTL modules	5
+Output FIFOs	3
+FIFO size	16 × 9
+Clock period	10 ns
+Clock frequency	100 MHz
+Ports	172
+Nets	2,486
+Cells	1,875
+Sequential cells	477
+Combinational cells	1,388
+Total cell area	6380
+Critical-path arrival time	9.77 ns
+Required time	9.20 ns
+Timing slack	-0.57 ns — VIOLATED
+Net switching power	30.1477 µW
+Reported dynamic power	30.1477 µW
+Lint findings	LINT-28 / LINT-31 / LINT-32 / LINT-52
+20. Repository Structure
+ROUTER-1X3-VERILOG/
 │
 ├── rtl/
+│   ├── router_fifo.v
+│   ├── router_fsm.v
+│   ├── router_reg.v
+│   ├── router_sync.v
+│   └── router_top.v
 │
-├── alarm_clock_env/
+├── tb/
+│   └── router_top_tb.v
 │
-├── alarm_clock_test/
+├── reports/
+│   ├── lint_report.txt
+│   ├── area_report.txt
+│   ├── timing_report.txt
+│   ├── power_report.txt
+│   └── clock_report.txt
 │
-├── alarm_clock_ip_agent/
-│
-├── alarm_clock_display_agent/
-│
-├── alarm_clock_assertions/
-│
-├── sim/
-│   └── Makefile
-│
-├── result
-├── topology result
 ├── README.md
 └── .gitignore
+21. Tools Used
+Verilog HDL — RTL design
+Questa Sim — RTL simulation
+Synopsys Design Compiler X-2025.06 — synthesis, lint/check, area, timing, clock, and power analysis
+lsi_10k.db — target standard-cell library
+22. Learning Outcomes
 
-The result and topology result files are retained as project evidence containing simulation/verification information.
+This project provided practical exposure to:
 
-Generated simulator and coverage databases should not be committed to the repository.
-
-## 12. Tools Used
-Verilog — RTL design
-SystemVerilog — testbench and verification
-UVM — constrained/randomized verification environment
-SVA — temporal assertion checking
-Synopsys VCS X-2025.06 — simulation and coverage
-Synopsys URG — coverage report generation
-Verdi — waveform/debug support
-## 13. Project Workflow
-Maven Functional Specification
-            ↓
-        RTL Design
-            ↓
-      RTL Simulation
-            ↓
-       UVM Testbench
-            ↓
-      Scoreboard Checks
-            ↓
-        SVA Checking
-            ↓
-    Functional Coverage
-            ↓
-      VCS Coverage DB
-            ↓
-        URG Merge
-            ↓
-      HTML Coverage Report
-## 14. Key Learning Outcomes
-
-This project demonstrates practical experience with:
-
-RTL design and module integration
-Sequential and combinational logic
-FSM-based control design
-BCD time representation
-Clock-divider/time-generation logic
-FIFO-style verification concepts
-SystemVerilog class-based verification
-UVM testbench architecture
-Constrained-random testing
-Scoreboard-based checking
-SystemVerilog Assertions
-Functional coverage
-Coverage database merging
-VCS/URG simulation and reporting
-Debugging simulation failures
-## 15. Known Results & Areas for Improvement
-
-The current project provides measurable verification evidence, but it also exposes areas for further improvement:
-
-Investigate the single scoreboard error related to sound_alarm.
-Increase assertion coverage from the current reported level.
-Increase functional/group coverage.
-Add additional corner-case alarm-time and current-time scenarios.
-Improve coverage closure for unhit bins.
-Add more targeted assertions for controller state transitions.
-Investigate the exact synchronization/timing relationship behind the sound_alarm scoreboard mismatch.
-
-These improvements would make the verification environment more comprehensive and improve coverage closure.
-
-## 16. Reference
-
-The functional architecture, I/O definition, module descriptions, timing behavior, controller states, counting algorithm, and RTL design procedure documented in this README are based on the supplied Maven Silicon Alarm Clock training material. The project-specific implementation, verification results, coverage values, and simulation results are documented separately based on the repository's actual execution.
+Packet-based RTL design
+Verilog module hierarchy
+FSM-based control logic
+FIFO design and integration
+Packet routing
+Header and payload handling
+Parity generation and error detection
+FIFO full/empty management
+Timeout and soft-reset handling
+RTL simulation
+Structural linting
+Logic synthesis
+Static timing analysis
+Clock analysis
+Area analysis
+Power estimation
+Interpretation of synthesis reports
