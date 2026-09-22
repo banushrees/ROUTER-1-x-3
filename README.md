@@ -13,7 +13,7 @@ The Maven specification defines the top-level Alarm Clock around six major funct
 5. Alarm Controller
 6. Display Driver
 
-The specification identifies these as sequential logic blocks except for the display driver, which is combinational logic. fileciteturn46file0L1-L3
+The specification identifies these as sequential logic blocks except for the display driver, which is combinational logic. 
 
 ---
 
