@@ -503,32 +503,31 @@ Reported dynamic power	30.1477 µW
 Lint findings	LINT-28 / LINT-31 / LINT-32 / LINT-52
 20. Repository Structure
 ROUTER-1X3-VERILOG/
-│
-├── rtl/
-│   ├── router_fifo.v
-│   ├── router_fsm.v
-│   ├── router_reg.v
-│   ├── router_sync.v
-│   └── router_top.v
-│
-├── tb/
-│   └── router_top_tb.v
-│
-├── reports/
-│   ├── lint_report.txt
-│   ├── area_report.txt
-│   ├── timing_report.txt
-│   ├── power_report.txt
-│   └── clock_report.txt
-│
-├── README.md
-└── .gitignore
+
+ rtl/
+─ router_fifo.v
+─ router_fsm.v
+─ router_reg.v
+─ router_sync.v
+─ router_top.v
+
+tb/
+ -router_top_tb.v
+
+ reports/
+ ─ lint_report.txt
+─ area_report.txt
+─ timing_report.txt
+─ power_report.txt
+─ clock_report.txt
+
 21. Tools Used
 Verilog HDL — RTL design
 Questa Sim — RTL simulation
 Synopsys Design Compiler X-2025.06 — synthesis, lint/check, area, timing, clock, and power analysis
 lsi_10k.db — target standard-cell library
-22. Learning Outcomes
+
+23. Learning Outcomes
 
 This project provided practical exposure to:
 
